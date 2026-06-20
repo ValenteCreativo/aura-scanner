@@ -15,191 +15,228 @@ export default function AuraApp() {
     setShowScanner(true)
     setTimeout(() => {
       scannerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 100)
+    }, 150)
   }
 
   return (
     <div className="relative min-h-screen bg-black">
-      {/* Background particles */}
+      {/* === LIVING BACKGROUND === */}
       <div className="fixed inset-0 z-0">
         <CosmicParticles />
       </div>
-
-      {/* Ambient gradient blobs */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-violet-900/10 rounded-full blur-[120px] animate-breathe" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-fuchsia-900/10 rounded-full blur-[100px] animate-breathe" style={{ animationDelay: '2.5s' }} />
-        <div className="absolute top-[40%] left-[50%] w-[30vw] h-[30vw] bg-indigo-900/8 rounded-full blur-[80px] animate-breathe" style={{ animationDelay: '1.2s' }} />
+        <div className="absolute top-[-30%] left-[-20%] w-[70vw] h-[70vw] bg-violet-950/20 rounded-full blur-[150px] animate-breathe" />
+        <div className="absolute bottom-[-30%] right-[-15%] w-[60vw] h-[60vw] bg-fuchsia-950/15 rounded-full blur-[130px] animate-breathe" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-[30%] right-[10%] w-[25vw] h-[25vw] bg-indigo-950/10 rounded-full blur-[100px] animate-breathe" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute bottom-[20%] left-[20%] w-[20vw] h-[20vw] bg-purple-950/10 rounded-full blur-[80px] animate-breathe" style={{ animationDelay: '4s' }} />
       </div>
 
-      {/* === HERO SECTION === */}
-      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-20">
-        {/* Sacred geometry background decorations */}
+      {/* === HERO === */}
+      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-24">
+        {/* Sacred geometry layers */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <FlowerOfLife className="w-[600px] h-[600px] opacity-20 animate-rotate-slow" />
+          <FlowerOfLife className="w-[700px] h-[700px] opacity-[0.07] animate-rotate-slow" />
         </div>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <Metatron className="w-[500px] h-[500px] opacity-10 animate-rotate-reverse" />
+          <Metatron className="w-[550px] h-[550px] opacity-[0.04] animate-rotate-reverse" />
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <SriYantra className="w-[300px] h-[300px] opacity-[0.06] animate-pulse-glow" />
         </div>
 
-        {/* Hero content */}
-        <div className="relative text-center max-w-2xl mx-auto space-y-8">
-          {/* Logo / Icon */}
-          <div className="relative mx-auto w-24 h-24 animate-float">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-600/30 to-fuchsia-600/30 blur-xl" />
-            <div className="relative w-full h-full rounded-full border border-violet-500/30 flex items-center justify-center backdrop-blur-sm bg-white/[0.02]">
-              <SriYantra className="w-14 h-14 opacity-80" />
+        <div className="relative text-center max-w-2xl mx-auto space-y-10">
+          {/* Sanskrit symbol */}
+          <div className="relative mx-auto w-28 h-28 animate-float">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 blur-2xl" />
+            <div className="absolute inset-0 rounded-full border border-violet-400/15 animate-pulse-glow" />
+            <div className="relative w-full h-full rounded-full border border-violet-500/20 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+              <span className="text-4xl text-violet-300/70 select-none">ॐ</span>
             </div>
           </div>
 
-          {/* Title */}
-          <div className="space-y-3">
-            <h1 className="text-5xl sm:text-6xl font-light tracking-tight">
-              <span className="bg-gradient-to-b from-white via-violet-100 to-violet-300/80 bg-clip-text text-transparent">
+          {/* Title block */}
+          <div className="space-y-4">
+            <p className="text-[10px] uppercase tracking-[0.4em] text-violet-400/40">प्रभामंडल · Prabhamandala</p>
+            <h1 className="text-5xl sm:text-7xl font-extralight tracking-tight leading-none">
+              <span className="bg-gradient-to-b from-white via-violet-100 to-violet-400/60 bg-clip-text text-transparent">
                 Aura Scanner
               </span>
             </h1>
-            <p className="text-lg text-violet-300/60 font-light tracking-wide">
-              Infrared Field Detector
+            <p className="text-base sm:text-lg text-gray-500 font-light tracking-wide">
+              Lectura del campo luminoso corporal
             </p>
           </div>
 
-          {/* Description */}
-          <div className="space-y-4 max-w-lg mx-auto">
-            <p className="text-[15px] text-gray-400 leading-relaxed">
-              Detecta y visualiza tu campo áurico en tiempo real. Usando inteligencia artificial
-              para reconocimiento corporal y análisis térmico de imagen, este scanner mapea
-              las zonas energéticas de tu cuerpo y revela los colores de tu aura.
+          {/* Philosophy text */}
+          <div className="space-y-5 max-w-lg mx-auto">
+            <p className="text-[15px] text-gray-400 leading-[1.8]">
+              En la tradición yogui, el <em className="text-violet-300/80 not-italic">Prabhamandala</em> es
+              el campo de luz que emana del cuerpo sutil. Este scanner utiliza inteligencia artificial
+              para detectar tu forma corporal y analizar los patrones de luminosidad que te rodean,
+              mapeándolos al sistema de <em className="text-violet-300/80 not-italic">siete chakras</em> y
+              los <em className="text-violet-300/80 not-italic">tres gunas</em> de la tradición védica.
             </p>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              Basado en MediaPipe Pose Detection, el sistema identifica 33 puntos de tu cuerpo
-              y analiza la luminosidad circundante para generar un mapa térmico que se traduce
-              en los 7 colores del campo áurico — desde la Raíz hasta la Corona.
+            <p className="text-sm text-gray-500/80 leading-[1.8]">
+              El <em className="text-violet-300/60 not-italic">Tejas</em> (fuego interior) se mide
+              analizando la luminosidad circundante de cada centro energético. Cada chakra recibe
+              una lectura basada en las condiciones reales de luz captadas por la cámara — un
+              espejo tecnológico de conceptos ancestrales.
             </p>
           </div>
 
-          {/* Chakra color strip */}
-          <div className="flex items-center justify-center gap-1.5 py-4">
-            {[
-              { color: '#ff0000', label: 'Raíz' },
-              { color: '#ff8800', label: 'Sacral' },
-              { color: '#ffdd00', label: 'Plexo' },
-              { color: '#00cc44', label: 'Corazón' },
-              { color: '#0066ff', label: 'Garganta' },
-              { color: '#4400aa', label: 'Tercer Ojo' },
-              { color: '#8800dd', label: 'Corona' },
-            ].map((chakra) => (
-              <div key={chakra.label} className="group relative">
-                <div
-                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full transition-transform duration-300 group-hover:scale-125"
-                  style={{
-                    backgroundColor: chakra.color,
-                    boxShadow: `0 0 12px ${chakra.color}44, 0 0 4px ${chakra.color}88`,
-                  }}
-                />
-                <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  {chakra.label}
-                </span>
-              </div>
-            ))}
+          {/* Chakra spine visualization */}
+          <div className="flex flex-col items-center gap-0 py-6">
+            <div className="relative flex flex-col items-center">
+              {[
+                { color: '#b400ff', name: 'Sahasrara', sanskrit: 'सहस्रार' },
+                { color: '#4b00c8', name: 'Ajna', sanskrit: 'आज्ञा' },
+                { color: '#0078ff', name: 'Vishuddha', sanskrit: 'विशुद्ध' },
+                { color: '#00dc50', name: 'Anahata', sanskrit: 'अनाहत' },
+                { color: '#ffdc00', name: 'Manipura', sanskrit: 'मणिपूर' },
+                { color: '#ff8c00', name: 'Svadhisthana', sanskrit: 'स्वाधिष्ठान' },
+                { color: '#ff1414', name: 'Muladhara', sanskrit: 'मूलाधार' },
+              ].map((chakra, i) => (
+                <div key={chakra.name} className="group flex items-center gap-3 py-1.5">
+                  {/* Connecting line */}
+                  {i > 0 && (
+                    <div className="absolute left-1/2 -translate-x-1/2 w-px h-3 bg-gradient-to-b from-transparent via-white/10 to-transparent" style={{ top: `${i * 36 - 6}px` }} />
+                  )}
+                  <span className="text-[9px] text-gray-600 w-24 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                    {chakra.sanskrit}
+                  </span>
+                  <div
+                    className="w-4 h-4 rounded-full transition-all duration-500 group-hover:scale-150 group-hover:shadow-lg"
+                    style={{
+                      backgroundColor: chakra.color,
+                      boxShadow: `0 0 8px ${chakra.color}44`,
+                    }}
+                  />
+                  <span className="text-[10px] text-gray-500 w-24 text-left opacity-0 group-hover:opacity-100 transition-opacity">
+                    {chakra.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* CTA Button */}
-          <div className="pt-6">
+          {/* CTA */}
+          <div className="pt-4">
             <button
               onClick={handleStart}
-              className="group relative px-10 py-4 rounded-full overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95"
+              className="group relative px-12 py-4 rounded-full overflow-hidden transition-all duration-500 hover:scale-105 active:scale-95"
             >
-              {/* Button glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 opacity-80 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 blur-xl opacity-40 group-hover:opacity-60 transition-opacity" />
-              {/* Button border */}
-              <div className="absolute inset-[1px] rounded-full bg-black/20 backdrop-blur-sm" />
-              {/* Button text */}
-              <span className="relative text-white font-medium tracking-wide">
-                Iniciar Lectura de Aura
+              <div className="absolute inset-0 bg-gradient-to-r from-violet-600/90 via-fuchsia-600/90 to-violet-600/90 group-hover:opacity-100 opacity-80 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 blur-2xl opacity-30 group-hover:opacity-50 transition-opacity" />
+              <div className="absolute inset-[1px] rounded-full bg-black/30" />
+              <span className="relative text-white/90 font-light tracking-wider text-sm sm:text-base">
+                Iniciar Lectura del Prabhamandala
               </span>
             </button>
+            <p className="text-[10px] text-gray-600 mt-4">Requiere acceso a la cámara</p>
           </div>
 
-          {/* Features grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-12 text-left">
+          {/* Concepts grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-14 text-left">
             {[
               {
-                title: 'Pose Detection',
-                desc: 'IA que detecta 33 puntos de tu cuerpo en tiempo real',
-                icon: '◉',
+                title: 'Prabhamandala',
+                sanskrit: 'प्रभामंडल',
+                desc: 'El círculo de luz que emana del cuerpo. Detectamos la luminosidad real que te rodea.',
               },
               {
-                title: 'Análisis Térmico',
-                desc: 'Muestreo de luminosidad por zona para mapeo de calor',
-                icon: '◈',
+                title: 'Tejas',
+                sanskrit: 'तेज',
+                desc: 'El fuego interior. Medimos la intensidad lumínica de cada zona corporal como indicador.',
               },
               {
-                title: '7 Chakras',
-                desc: 'Mapeo energético desde la Raíz hasta la Corona',
-                icon: '✦',
+                title: 'Koshas',
+                sanskrit: 'कोश',
+                desc: 'Las capas del ser. Visualizamos el Pranamaya Kosha (cuerpo energético) como campo áurico.',
               },
-            ].map((feature) => (
-              <div
-                key={feature.title}
-                className="p-4 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-sm"
-              >
-                <span className="text-violet-400 text-lg">{feature.icon}</span>
-                <h3 className="text-sm font-medium text-gray-200 mt-2">{feature.title}</h3>
-                <p className="text-xs text-gray-500 mt-1 leading-relaxed">{feature.desc}</p>
+            ].map((concept) => (
+              <div key={concept.title}
+                className="p-5 rounded-xl bg-white/[0.015] border border-white/[0.04] hover:border-violet-500/15 transition-colors">
+                <p className="text-[10px] text-violet-400/40 mb-1">{concept.sanskrit}</p>
+                <h3 className="text-sm text-gray-200 font-medium">{concept.title}</h3>
+                <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">{concept.desc}</p>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        {showScanner && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-float">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-violet-400/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3" />
-            </svg>
-          </div>
-        )}
       </section>
 
       {/* === SCANNER SECTION === */}
       {showScanner && (
-        <section ref={scannerRef} className="relative z-10 min-h-screen px-4 py-16">
-          {/* Decorative geometry behind scanner */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
-            <FlowerOfLife className="w-[800px] h-[800px]" />
+        <section ref={scannerRef} className="relative z-10 min-h-screen px-4 py-20">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
+            <FlowerOfLife className="w-[900px] h-[900px]" />
           </div>
 
-          <div className="relative max-w-4xl mx-auto">
-            {/* Section header */}
-            <div className="text-center mb-8 space-y-2">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-violet-400/60">
-                Lectura en Tiempo Real
-              </p>
-              <h2 className="text-2xl font-light text-white/90">
-                Campo Áurico
+          <div className="relative max-w-3xl mx-auto">
+            <div className="text-center mb-10 space-y-2">
+              <p className="text-[9px] uppercase tracking-[0.4em] text-violet-400/40">Lectura en Vivo</p>
+              <h2 className="text-3xl font-extralight text-white/80 tracking-wide">
+                Tu Prabhamandala
               </h2>
+              <p className="text-xs text-gray-600">Detección de pose + análisis de luminosidad en tiempo real</p>
             </div>
-
-            {/* Scanner component */}
             <AuraScanner />
           </div>
         </section>
       )}
 
-      {/* === FOOTER === */}
-      <footer className="relative z-10 px-6 py-8 border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center space-y-3">
-          <div className="flex items-center justify-center gap-3">
-            <SriYantra className="w-5 h-5 opacity-40" />
-            <span className="text-xs text-gray-600 tracking-wide">Aura Scanner</span>
+      {/* === DISCLAIMER + FOOTER === */}
+      <footer className="relative z-10 px-6 py-12 border-t border-white/[0.03]">
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Disclaimer */}
+          <div className="p-6 rounded-xl bg-white/[0.015] border border-amber-500/10">
+            <div className="flex items-start gap-3">
+              <span className="text-amber-400/60 text-sm mt-0.5">⚠</span>
+              <div className="space-y-3">
+                <h3 className="text-xs font-medium text-amber-300/70 uppercase tracking-wider">
+                  Nota Importante — Esto no es un lector de aura real
+                </h3>
+                <div className="space-y-2 text-[11px] text-gray-500 leading-relaxed">
+                  <p>
+                    Este proyecto es un <strong className="text-gray-400">experimento artístico y tecnológico</strong>.
+                    No detecta campos electromagnéticos reales, radiación infrarroja, ni energía espiritual.
+                  </p>
+                  <p>
+                    Lo que hace: usa <strong className="text-gray-400">MediaPipe Pose Landmarker</strong> (IA de Google)
+                    para detectar 33 puntos de tu cuerpo en la imagen de la cámara. Luego
+                    <strong className="text-gray-400"> muestrea los píxeles</strong> (brillo y color) alrededor de
+                    cada zona corporal y traduce esa información a una paleta térmica visual.
+                  </p>
+                  <p>
+                    Los resultados dependen de las <strong className="text-gray-400">condiciones de iluminación</strong>,
+                    el color de tu ropa, el fondo detrás de ti, y la calidad de tu cámara. No tiene
+                    ninguna base médica, científica, ni diagnóstica.
+                  </p>
+                  <p>
+                    La terminología yogui (chakras, Tejas, Gunas, Prabhamandala) se usa como
+                    <strong className="text-gray-400"> marco conceptual y estético</strong> para hacer la
+                    experiencia más interesante. Es un homenaje a tradiciones milenarias, no una
+                    herramienta espiritual certificada.
+                  </p>
+                  <p className="text-gray-600 italic">
+                    Úsalo como lo que es: un espejo tecnológico con alma artística. ✨
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          <p className="text-[10px] text-gray-700 max-w-md mx-auto leading-relaxed">
-            Detección de pose con MediaPipe Pose Landmarker. Análisis de campo áurico
-            basado en muestreo de luminosidad. Los resultados son experimentales y
-            con fines de exploración y entretenimiento.
-          </p>
+
+          {/* Footer */}
+          <div className="text-center space-y-2 pt-4">
+            <div className="flex items-center justify-center gap-2">
+              <SriYantra className="w-4 h-4 opacity-30" />
+              <span className="text-[10px] text-gray-700 tracking-widest uppercase">Aura Scanner v3.0</span>
+              <SriYantra className="w-4 h-4 opacity-30" />
+            </div>
+            <p className="text-[10px] text-gray-800">
+              Hecho con MediaPipe · Canvas · Next.js
+            </p>
+          </div>
         </div>
       </footer>
     </div>

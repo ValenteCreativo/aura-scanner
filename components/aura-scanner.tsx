@@ -2,29 +2,124 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react'
 
-// Chakra/body zone mapping to MediaPipe Pose Landmarker indices
-const BODY_ZONES = [
-  { name: 'Corona', landmarks: [0], color: [148, 0, 211] },
-  { name: 'Tercer Ojo', landmarks: [1, 4], color: [75, 0, 130] },
-  { name: 'Garganta', landmarks: [7, 8], color: [0, 100, 255] },
-  { name: 'Corazón', landmarks: [11, 12], color: [0, 255, 100] },
-  { name: 'Plexo Solar', landmarks: [23, 24], color: [255, 255, 0] },
-  { name: 'Sacral', landmarks: [25, 26], color: [255, 165, 0] },
-  { name: 'Raíz', landmarks: [27, 28], color: [255, 0, 0] },
+// === YOGIC CHAKRA SYSTEM ===
+// Mapped to MediaPipe Pose Landmarker points with correct body positions
+// Using midpoints between landmarks to place chakras on the spine/body axis
+const CHAKRAS = [
+  {
+    name: 'Sahasrara',
+    sanskrit: 'सहस्रार',
+    english: 'Corona',
+    // Top of head - above nose (landmark 0), offset upward
+    landmarks: [0],
+    offsetY: -0.06, // above the head
+    color: [180, 0, 255],
+    element: 'Consciencia pura',
+    quality: 'Conexión espiritual, iluminación',
+    mantra: 'OM',
+    blocked: 'Desconexión, dogmatismo, materialismo excesivo',
+    active: 'Sabiduría, unidad con el todo, paz interior',
+  },
+  {
+    name: 'Ajna',
+    sanskrit: 'आज्ञा',
+    english: 'Tercer Ojo',
+    // Between the eyes - midpoint of inner eye corners (1, 4)
+    landmarks: [1, 4],
+    offsetY: 0,
+    color: [75, 0, 200],
+    element: 'Luz',
+    quality: 'Intuición, percepción, clarividencia',
+    mantra: 'OM',
+    blocked: 'Confusión, falta de propósito, ilusión',
+    active: 'Visión clara, intuición fuerte, imaginación',
+  },
+  {
+    name: 'Vishuddha',
+    sanskrit: 'विशुद्ध',
+    english: 'Garganta',
+    // Throat - midpoint between shoulders (11, 12) moved up toward chin
+    landmarks: [11, 12, 0],
+    offsetY: 0, // weighted average puts it at throat
+    color: [0, 120, 255],
+    element: 'Éter (Akasha)',
+    quality: 'Comunicación, verdad, expresión',
+    mantra: 'HAM',
+    blocked: 'Miedo a hablar, secretos, deshonestidad',
+    active: 'Expresión auténtica, creatividad verbal, escucha activa',
+  },
+  {
+    name: 'Anahata',
+    sanskrit: 'अनाहत',
+    english: 'Corazón',
+    // Heart center - midpoint between shoulders (11, 12)
+    landmarks: [11, 12],
+    offsetY: 0.03,
+    color: [0, 220, 80],
+    element: 'Aire (Vayu)',
+    quality: 'Amor, compasión, equilibrio',
+    mantra: 'YAM',
+    blocked: 'Soledad, amargura, incapacidad de perdonar',
+    active: 'Amor incondicional, empatía, armonía interior',
+  },
+  {
+    name: 'Manipura',
+    sanskrit: 'मणिपूर',
+    english: 'Plexo Solar',
+    // Solar plexus - between chest and hips (midpoint of shoulders and hips)
+    landmarks: [11, 12, 23, 24],
+    offsetY: 0,
+    color: [255, 220, 0],
+    element: 'Fuego (Agni)',
+    quality: 'Poder personal, voluntad, transformación',
+    mantra: 'RAM',
+    blocked: 'Inseguridad, victimismo, control excesivo',
+    active: 'Confianza, determinación, poder de transformación',
+  },
+  {
+    name: 'Svadhisthana',
+    sanskrit: 'स्वाधिष्ठान',
+    english: 'Sacral',
+    // Sacral - slightly above hips (23, 24)
+    landmarks: [23, 24],
+    offsetY: -0.02,
+    color: [255, 140, 0],
+    element: 'Agua (Apas)',
+    quality: 'Creatividad, placer, emociones',
+    mantra: 'VAM',
+    blocked: 'Culpa, frigidez emocional, adicciones',
+    active: 'Fluidez emocional, creatividad, pasión',
+  },
+  {
+    name: 'Muladhara',
+    sanskrit: 'मूलाधार',
+    english: 'Raíz',
+    // Root - base of spine (between hips, going down toward knees)
+    landmarks: [23, 24],
+    offsetY: 0.04,
+    color: [255, 20, 20],
+    element: 'Tierra (Prithvi)',
+    quality: 'Supervivencia, enraizamiento, seguridad',
+    mantra: 'LAM',
+    blocked: 'Miedo, ansiedad, inestabilidad',
+    active: 'Seguridad, vitalidad, conexión con la tierra',
+  },
 ]
 
+// Thermal/infrared-inspired color palette for the Prabhamandala (luminous field)
 const THERMAL_PALETTE: [number, number, number][] = [
-  [0, 0, 32],
-  [0, 0, 128],
-  [0, 80, 255],
-  [0, 200, 200],
-  [0, 255, 80],
-  [128, 255, 0],
-  [255, 255, 0],
-  [255, 160, 0],
-  [255, 60, 0],
-  [255, 0, 80],
-  [255, 200, 255],
+  [0, 0, 40],
+  [10, 0, 100],
+  [30, 0, 180],
+  [0, 80, 220],
+  [0, 180, 180],
+  [0, 220, 80],
+  [180, 255, 0],
+  [255, 220, 0],
+  [255, 140, 0],
+  [255, 60, 20],
+  [255, 20, 80],
+  [255, 180, 255],
 ]
 
 function getThermalColor(intensity: number): [number, number, number] {
@@ -40,23 +135,17 @@ function getThermalColor(intensity: number): [number, number, number] {
 }
 
 function sampleIntensity(
-  data: Uint8ClampedArray,
-  width: number,
-  height: number,
-  x: number,
-  y: number,
-  radius: number
+  data: Uint8ClampedArray, width: number, height: number,
+  x: number, y: number, radius: number
 ): number {
-  let total = 0
-  let count = 0
-  const px = Math.round(x)
-  const py = Math.round(y)
+  let total = 0, count = 0
+  const px = Math.round(x), py = Math.round(y)
   for (let dy = -radius; dy <= radius; dy += 3) {
     for (let dx = -radius; dx <= radius; dx += 3) {
-      const sx = px + dx
-      const sy = py + dy
+      const sx = px + dx, sy = py + dy
       if (sx >= 0 && sx < width && sy >= 0 && sy < height) {
         const i = (sy * width + sx) * 4
+        // Weighted luminance (perceived brightness)
         total += (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255
         count++
       }
@@ -65,11 +154,52 @@ function sampleIntensity(
   return count > 0 ? total / count : 0
 }
 
-interface AuraReading {
-  zone: string
+// Get dominant hue around a point (for more nuanced color reading)
+function sampleDominantHue(
+  data: Uint8ClampedArray, width: number, height: number,
+  x: number, y: number, radius: number
+): number {
+  let totalR = 0, totalG = 0, totalB = 0, count = 0
+  const px = Math.round(x), py = Math.round(y)
+  for (let dy = -radius; dy <= radius; dy += 4) {
+    for (let dx = -radius; dx <= radius; dx += 4) {
+      const sx = px + dx, sy = py + dy
+      if (sx >= 0 && sx < width && sy >= 0 && sy < height) {
+        const i = (sy * width + sx) * 4
+        totalR += data[i]; totalG += data[i + 1]; totalB += data[i + 2]
+        count++
+      }
+    }
+  }
+  if (count === 0) return 0
+  const r = totalR / count / 255, g = totalG / count / 255, b = totalB / count / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  if (max === min) return 0
+  let h = 0
+  if (max === r) h = ((g - b) / (max - min)) % 6
+  else if (max === g) h = (b - r) / (max - min) + 2
+  else h = (r - g) / (max - min) + 4
+  return (h * 60 + 360) % 360
+}
+
+interface ChakraReading {
+  name: string
+  sanskrit: string
+  english: string
   intensity: number
+  hue: number
   color: [number, number, number]
   position: { x: number; y: number }
+  element: string
+  quality: string
+  mantra: string
+  interpretation: string
+}
+
+function getInterpretation(intensity: number, chakra: typeof CHAKRAS[0]): string {
+  if (intensity > 0.6) return chakra.active
+  if (intensity < 0.25) return chakra.blocked
+  return chakra.quality
 }
 
 export default function AuraScanner() {
@@ -80,9 +210,11 @@ export default function AuraScanner() {
   const [isScanning, setIsScanning] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [modelReady, setModelReady] = useState(false)
-  const [auraReadings, setAuraReadings] = useState<AuraReading[]>([])
+  const [readings, setReadings] = useState<ChakraReading[]>([])
   const [dominantAura, setDominantAura] = useState('')
+  const [tejasLevel, setTejasLevel] = useState(0) // Overall luminosity/tejas
   const [error, setError] = useState('')
+  const [selectedChakra, setSelectedChakra] = useState<ChakraReading | null>(null)
 
   const poseLandmarkerRef = useRef<any>(null)
   const animFrameRef = useRef<number>(0)
@@ -97,48 +229,148 @@ export default function AuraScanner() {
     height: number
   ) => {
     ctx.clearRect(0, 0, width, height)
-    const readings: AuraReading[] = []
+    const chakraReadings: ChakraReading[] = []
 
-    for (const zone of BODY_ZONES) {
+    // Calculate spine axis for proper chakra placement
+    // We need shoulder midpoint and hip midpoint to define the central axis
+    const shoulderMid = landmarks[11] && landmarks[12] ? {
+      x: (landmarks[11].x + landmarks[12].x) / 2,
+      y: (landmarks[11].y + landmarks[12].y) / 2,
+    } : null
+    const hipMid = landmarks[23] && landmarks[24] ? {
+      x: (landmarks[23].x + landmarks[24].x) / 2,
+      y: (landmarks[23].y + landmarks[24].y) / 2,
+    } : null
+
+    for (const chakra of CHAKRAS) {
       let avgX = 0, avgY = 0, count = 0
-      for (const idx of zone.landmarks) {
+
+      for (const idx of chakra.landmarks) {
         if (idx < landmarks.length) {
           const lm = landmarks[idx]
-          if ((lm.visibility ?? 1) > 0.5) {
-            avgX += lm.x * width
-            avgY += lm.y * height
+          if ((lm.visibility ?? 1) > 0.4) {
+            avgX += lm.x
+            avgY += lm.y
             count++
           }
         }
       }
+
       if (count === 0) continue
       avgX /= count
       avgY /= count
 
-      const intensity = sampleIntensity(imageData.data, width, height, avgX, avgY, 35)
+      // Apply vertical offset
+      avgY += chakra.offsetY
+
+      // For Vishuddha (throat): place between head and shoulders
+      if (chakra.name === 'Vishuddha' && shoulderMid && landmarks[0]) {
+        avgX = (landmarks[0].x + shoulderMid.x) / 2
+        avgY = landmarks[0].y + (shoulderMid.y - landmarks[0].y) * 0.6
+      }
+
+      // For Manipura (solar plexus): place between shoulders and hips
+      if (chakra.name === 'Manipura' && shoulderMid && hipMid) {
+        avgX = (shoulderMid.x + hipMid.x) / 2
+        avgY = shoulderMid.y + (hipMid.y - shoulderMid.y) * 0.45
+      }
+
+      const px = avgX * width
+      const py = avgY * height
+
+      // Sample energy around this chakra
+      const intensity = sampleIntensity(imageData.data, width, height, px, py, 40)
+      const hue = sampleDominantHue(imageData.data, width, height, px, py, 30)
       const thermalColor = getThermalColor(intensity)
 
-      readings.push({ zone: zone.name, intensity, color: thermalColor, position: { x: avgX, y: avgY } })
+      chakraReadings.push({
+        name: chakra.name,
+        sanskrit: chakra.sanskrit,
+        english: chakra.english,
+        intensity,
+        hue,
+        color: thermalColor,
+        position: { x: px, y: py },
+        element: chakra.element,
+        quality: chakra.quality,
+        mantra: chakra.mantra,
+        interpretation: getInterpretation(intensity, chakra),
+      })
 
-      // Multi-layer aura glow
-      for (let layer = 4; layer >= 0; layer--) {
-        const radius = 40 + layer * 30
-        const alpha = (0.18 - layer * 0.03) * (0.5 + intensity * 0.5)
-        const r = Math.round(thermalColor[0] * 0.55 + zone.color[0] * 0.45)
-        const g = Math.round(thermalColor[1] * 0.55 + zone.color[1] * 0.45)
-        const b = Math.round(thermalColor[2] * 0.55 + zone.color[2] * 0.45)
-        const gradient = ctx.createRadialGradient(avgX, avgY, 0, avgX, avgY, radius)
-        gradient.addColorStop(0, `rgba(${r},${g},${b},${alpha})`)
-        gradient.addColorStop(0.6, `rgba(${r},${g},${b},${alpha * 0.4})`)
+      // === DRAW PRABHAMANDALA (luminous aura field) ===
+      // Multiple concentric layers with organic noise
+      const time = performance.now() * 0.001
+      const layers = 6
+      for (let layer = layers; layer >= 0; layer--) {
+        const baseRadius = 30 + layer * 25
+        const wobble = Math.sin(time * 0.5 + layer) * 5
+        const radius = baseRadius + wobble
+        const alpha = (0.2 - layer * 0.025) * (0.4 + intensity * 0.6)
+
+        // Blend chakra color with thermal reading
+        const r = Math.round(thermalColor[0] * 0.4 + chakra.color[0] * 0.6)
+        const g = Math.round(thermalColor[1] * 0.4 + chakra.color[1] * 0.6)
+        const b = Math.round(thermalColor[2] * 0.4 + chakra.color[2] * 0.6)
+
+        const gradient = ctx.createRadialGradient(px, py, 0, px, py, radius)
+        gradient.addColorStop(0, `rgba(${r},${g},${b},${alpha * 1.2})`)
+        gradient.addColorStop(0.4, `rgba(${r},${g},${b},${alpha * 0.6})`)
+        gradient.addColorStop(0.7, `rgba(${r},${g},${b},${alpha * 0.2})`)
         gradient.addColorStop(1, `rgba(${r},${g},${b},0)`)
         ctx.fillStyle = gradient
         ctx.beginPath()
-        ctx.arc(avgX, avgY, radius, 0, Math.PI * 2)
+        ctx.arc(px, py, radius, 0, Math.PI * 2)
         ctx.fill()
+      }
+
+      // Draw chakra center point (bindu)
+      ctx.fillStyle = `rgba(${chakra.color[0]},${chakra.color[1]},${chakra.color[2]}, 0.9)`
+      ctx.shadowColor = `rgb(${chakra.color[0]},${chakra.color[1]},${chakra.color[2]})`
+      ctx.shadowBlur = 12
+      ctx.beginPath()
+      ctx.arc(px, py, 5, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.shadowBlur = 0
+
+      // Draw spinning lotus petals around active chakras
+      if (intensity > 0.35) {
+        const petals = 6 + Math.floor(intensity * 6) // 6-12 petals based on intensity
+        const petalRadius = 12 + intensity * 8
+        ctx.strokeStyle = `rgba(${chakra.color[0]},${chakra.color[1]},${chakra.color[2]}, ${intensity * 0.4})`
+        ctx.lineWidth = 0.8
+        for (let p = 0; p < petals; p++) {
+          const angle = (p / petals) * Math.PI * 2 + time * 0.3
+          const petalX = px + Math.cos(angle) * petalRadius
+          const petalY = py + Math.sin(angle) * petalRadius
+          ctx.beginPath()
+          ctx.arc(petalX, petalY, 3, 0, Math.PI * 2)
+          ctx.stroke()
+        }
       }
     }
 
-    // Skeleton connections with thermal coloring
+    // === DRAW SUSHUMNA NADI (central energy channel) ===
+    if (chakraReadings.length >= 2) {
+      ctx.lineWidth = 1.5
+      ctx.setLineDash([4, 8])
+      for (let i = 1; i < chakraReadings.length; i++) {
+        const prev = chakraReadings[i - 1]
+        const curr = chakraReadings[i]
+        const avgIntensity = (prev.intensity + curr.intensity) / 2
+        const color = getThermalColor(avgIntensity)
+        ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${0.15 + avgIntensity * 0.2})`
+        ctx.beginPath()
+        // Curved line (nadi flow)
+        const cpX = (prev.position.x + curr.position.x) / 2 + Math.sin(performance.now() * 0.002) * 10
+        const cpY = (prev.position.y + curr.position.y) / 2
+        ctx.moveTo(prev.position.x, prev.position.y)
+        ctx.quadraticCurveTo(cpX, cpY, curr.position.x, curr.position.y)
+        ctx.stroke()
+      }
+      ctx.setLineDash([])
+    }
+
+    // === DRAW BODY SKELETON (subtle) ===
     const connections: [number, number][] = [
       [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
       [11, 23], [12, 24], [23, 24],
@@ -147,70 +379,60 @@ export default function AuraScanner() {
     for (const [i, j] of connections) {
       if (i < landmarks.length && j < landmarks.length) {
         const a = landmarks[i], b = landmarks[j]
-        if ((a.visibility ?? 1) > 0.5 && (b.visibility ?? 1) > 0.5) {
+        if ((a.visibility ?? 1) > 0.4 && (b.visibility ?? 1) > 0.4) {
           const ax = a.x * width, ay = a.y * height
           const bx = b.x * width, by = b.y * height
-          const midX = (ax + bx) / 2, midY = (ay + by) / 2
-          const int = sampleIntensity(imageData.data, width, height, midX, midY, 15)
-          const color = getThermalColor(int)
-          ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},0.7)`
-          ctx.lineWidth = 2.5
-          ctx.shadowColor = `rgb(${color[0]},${color[1]},${color[2]})`
-          ctx.shadowBlur = 8
+          ctx.strokeStyle = `rgba(255,255,255,0.08)`
+          ctx.lineWidth = 1
           ctx.beginPath()
           ctx.moveTo(ax, ay)
           ctx.lineTo(bx, by)
           ctx.stroke()
-          ctx.shadowBlur = 0
         }
       }
     }
 
-    // Keypoint dots
-    for (const lm of landmarks) {
-      if ((lm.visibility ?? 1) > 0.5) {
-        const px = lm.x * width, py = lm.y * height
-        const int = sampleIntensity(imageData.data, width, height, px, py, 8)
-        const color = getThermalColor(int)
-        ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`
-        ctx.shadowColor = `rgb(${color[0]},${color[1]},${color[2]})`
-        ctx.shadowBlur = 6
-        ctx.beginPath()
-        ctx.arc(px, py, 3.5, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.shadowBlur = 0
-      }
-    }
+    // === DRAW OUTER PRABHAMANDALA (full-body aura field) ===
+    if (shoulderMid && hipMid) {
+      const centerX = (shoulderMid.x + hipMid.x) / 2 * width
+      const centerY = (shoulderMid.y + hipMid.y) / 2 * height
+      const bodyHeight = Math.abs(hipMid.y - shoulderMid.y) * height
+      const avgIntensity = chakraReadings.reduce((s, r) => s + r.intensity, 0) / (chakraReadings.length || 1)
 
-    // Energy lines between zone readings
-    for (let i = 1; i < readings.length; i++) {
-      const prev = readings[i - 1], curr = readings[i]
-      const avgColor = getThermalColor((prev.intensity + curr.intensity) / 2)
-      ctx.strokeStyle = `rgba(${avgColor[0]},${avgColor[1]},${avgColor[2]},0.2)`
-      ctx.lineWidth = 1.5
+      // Outer egg-shaped aura (Auric Egg / Pranamaya Kosha)
+      ctx.save()
+      ctx.translate(centerX, centerY)
+      ctx.scale(1, 1.4) // Egg shape
+      const outerRadius = bodyHeight * 1.2
+      const outerGradient = ctx.createRadialGradient(0, 0, bodyHeight * 0.3, 0, 0, outerRadius)
+      const mainColor = getThermalColor(avgIntensity)
+      outerGradient.addColorStop(0, `rgba(${mainColor[0]},${mainColor[1]},${mainColor[2]},0)`)
+      outerGradient.addColorStop(0.6, `rgba(${mainColor[0]},${mainColor[1]},${mainColor[2]},0.03)`)
+      outerGradient.addColorStop(0.85, `rgba(${mainColor[0]},${mainColor[1]},${mainColor[2]},0.06)`)
+      outerGradient.addColorStop(1, `rgba(${mainColor[0]},${mainColor[1]},${mainColor[2]},0)`)
+      ctx.fillStyle = outerGradient
       ctx.beginPath()
-      ctx.moveTo(prev.position.x, prev.position.y)
-      ctx.lineTo(curr.position.x, curr.position.y)
-      ctx.stroke()
+      ctx.arc(0, 0, outerRadius, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.restore()
     }
 
-    setAuraReadings(readings)
-    if (readings.length > 0) {
-      const avg = readings.reduce((s, r) => s + r.intensity, 0) / readings.length
-      if (avg > 0.75) setDominantAura('Blanco — Altísima energía')
-      else if (avg > 0.6) setDominantAura('Dorado — Energía espiritual')
-      else if (avg > 0.45) setDominantAura('Violeta — Intuición activa')
-      else if (avg > 0.35) setDominantAura('Azul — Calma profunda')
-      else if (avg > 0.25) setDominantAura('Verde — Equilibrio')
-      else if (avg > 0.15) setDominantAura('Naranja — Creatividad')
-      else setDominantAura('Rojo — Energía física')
+    setReadings(chakraReadings)
+
+    // Calculate Tejas (overall luminous energy)
+    if (chakraReadings.length > 0) {
+      const avg = chakraReadings.reduce((s, r) => s + r.intensity, 0) / chakraReadings.length
+      setTejasLevel(avg)
+      if (avg > 0.7) setDominantAura('Sattva — Luminosidad pura')
+      else if (avg > 0.5) setDominantAura('Sattva-Rajas — Luz activa')
+      else if (avg > 0.35) setDominantAura('Rajas — Energía dinámica')
+      else if (avg > 0.2) setDominantAura('Rajas-Tamas — Transición')
+      else setDominantAura('Tamas — Energía en reposo')
     }
   }, [])
 
   const runDetection = useCallback(() => {
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    const overlay = overlayRef.current
+    const video = videoRef.current, canvas = canvasRef.current, overlay = overlayRef.current
     if (!video || !canvas || !overlay || !poseLandmarkerRef.current) return
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     const overlayCtx = overlay.getContext('2d')
@@ -222,23 +444,22 @@ export default function AuraScanner() {
         return
       }
       const now = performance.now()
-      if (now === lastTimeRef.current) {
-        animFrameRef.current = requestAnimationFrame(detect)
-        return
-      }
+      if (now === lastTimeRef.current) { animFrameRef.current = requestAnimationFrame(detect); return }
       lastTimeRef.current = now
+
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
       overlay.width = video.videoWidth
       overlay.height = video.videoHeight
       ctx.drawImage(video, 0, 0)
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
       try {
         const result = poseLandmarkerRef.current.detectForVideo(video, now)
         if (result.landmarks && result.landmarks.length > 0) {
           drawAura(overlayCtx, result.landmarks[0], imageData, canvas.width, canvas.height)
         }
-      } catch { /* skip frame */ }
+      } catch { /* skip */ }
       animFrameRef.current = requestAnimationFrame(detect)
     }
     detect()
@@ -253,16 +474,14 @@ export default function AuraScanner() {
         audio: false,
       })
       streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
-      }
+      if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play() }
+
       const vision = await import('@mediapipe/tasks-vision')
       const { PoseLandmarker, FilesetResolver } = vision
-      const filesetResolver = await FilesetResolver.forVisionTasks(
+      const fileset = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       )
-      const poseLandmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
+      const poseLandmarker = await PoseLandmarker.createFromOptions(fileset, {
         baseOptions: {
           modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
           delegate: 'GPU',
@@ -275,11 +494,9 @@ export default function AuraScanner() {
       setIsLoading(false)
       setIsScanning(true)
     } catch (err: any) {
-      setError(
-        err.name === 'NotAllowedError'
-          ? 'Necesitas permitir acceso a la cámara para usar el scanner.'
-          : `Error al inicializar: ${err.message}`
-      )
+      setError(err.name === 'NotAllowedError'
+        ? 'Se requiere acceso a la cámara para la lectura del Prabhamandala.'
+        : `Error: ${err.message}`)
       setIsLoading(false)
     }
   }, [])
@@ -287,18 +504,13 @@ export default function AuraScanner() {
   const stopScanning = useCallback(() => {
     setIsScanning(false)
     cancelAnimationFrame(animFrameRef.current)
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
-      streamRef.current = null
-    }
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null }
     if (videoRef.current) videoRef.current.srcObject = null
-    if (poseLandmarkerRef.current) {
-      poseLandmarkerRef.current.close()
-      poseLandmarkerRef.current = null
-    }
+    if (poseLandmarkerRef.current) { poseLandmarkerRef.current.close(); poseLandmarkerRef.current = null }
     setModelReady(false)
-    setAuraReadings([])
+    setReadings([])
     setDominantAura('')
+    setTejasLevel(0)
     lastTimeRef.current = -1
   }, [])
 
@@ -315,121 +527,176 @@ export default function AuraScanner() {
     }
   }, [])
 
-  // Auto-start on mount
+  // Auto-start
   useEffect(() => {
-    if (!isScanning && !isLoading && !modelReady) {
-      initScanner()
-    }
+    if (!isScanning && !isLoading && !modelReady && !error) initScanner()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Scanner viewport */}
-      <div className="relative w-full aspect-[4/3] bg-gray-950 rounded-2xl overflow-hidden border border-violet-500/10 shadow-2xl shadow-violet-500/5">
-        {/* Loading state */}
+      <div className="relative w-full aspect-[4/3] bg-black rounded-2xl overflow-hidden border border-violet-500/10 shadow-[0_0_60px_-10px_rgba(139,92,246,0.15)]">
+        {/* Loading */}
         {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10 bg-black/90 backdrop-blur-sm">
-            <div className="relative w-16 h-16">
-              <div className="absolute inset-0 border-2 border-violet-500/30 rounded-full" />
-              <div className="absolute inset-0 border-2 border-transparent border-t-violet-400 rounded-full animate-spin" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 z-10 bg-black/95">
+            <div className="relative w-20 h-20">
+              <div className="absolute inset-0 border border-violet-500/20 rounded-full animate-pulse" />
+              <div className="absolute inset-2 border border-violet-400/30 rounded-full animate-spin" style={{ animationDuration: '3s' }} />
+              <div className="absolute inset-4 border border-fuchsia-400/40 rounded-full animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-violet-300 text-lg">ॐ</span>
+              </div>
             </div>
             <div className="text-center space-y-1">
-              <p className="text-violet-300/80 text-sm">Abriendo portal...</p>
-              <p className="text-gray-600 text-xs">MediaPipe Pose Landmarker</p>
+              <p className="text-violet-200/70 text-sm tracking-wide">Abriendo el tercer ojo...</p>
+              <p className="text-gray-600 text-[10px] tracking-widest uppercase">Pose Landmarker</p>
             </div>
           </div>
         )}
 
-        {/* Error state */}
+        {/* Error */}
         {error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10 p-8 bg-black/90">
-            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-              <span className="text-red-400 text-lg">✕</span>
-            </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10 p-8 bg-black/95">
+            <span className="text-3xl">🙏</span>
             <p className="text-red-300/80 text-sm text-center max-w-sm">{error}</p>
-            <button
-              onClick={() => { setError(''); initScanner() }}
-              className="px-5 py-2 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-full transition"
-            >
+            <button onClick={() => { setError(''); initScanner() }}
+              className="px-5 py-2 text-xs bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 text-violet-300 rounded-full transition">
               Reintentar
             </button>
           </div>
         )}
 
         {/* Video + Overlay */}
-        <video
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
-          playsInline muted
-          style={{ opacity: isScanning ? 0.3 : 0 }}
-        />
+        <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+          playsInline muted style={{ opacity: isScanning ? 0.25 : 0 }} />
         <canvas ref={canvasRef} className="hidden" />
-        <canvas
-          ref={overlayRef}
-          className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
-          style={{ opacity: isScanning ? 1 : 0 }}
-        />
+        <canvas ref={overlayRef} className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+          style={{ opacity: isScanning ? 1 : 0 }} />
 
-        {/* Scan line effect */}
+        {/* Scan overlay effects */}
         {isScanning && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent animate-scan-line" />
-          </div>
+          <>
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-violet-400/30 to-transparent animate-scan-line" />
+            </div>
+            <div className="absolute inset-0 pointer-events-none p-2">
+              <div className="absolute top-2 left-2 w-4 h-4 border-t border-l border-violet-400/30" />
+              <div className="absolute top-2 right-2 w-4 h-4 border-t border-r border-violet-400/30" />
+              <div className="absolute bottom-2 left-2 w-4 h-4 border-b border-l border-violet-400/30" />
+              <div className="absolute bottom-2 right-2 w-4 h-4 border-b border-r border-violet-400/30" />
+            </div>
+          </>
         )}
 
-        {/* Corner brackets */}
-        {isScanning && (
-          <div className="absolute inset-0 pointer-events-none p-3">
-            <div className="absolute top-3 left-3 w-5 h-5 border-t border-l border-violet-400/40 rounded-tl" />
-            <div className="absolute top-3 right-3 w-5 h-5 border-t border-r border-violet-400/40 rounded-tr" />
-            <div className="absolute bottom-3 left-3 w-5 h-5 border-b border-l border-violet-400/40 rounded-bl" />
-            <div className="absolute bottom-3 right-3 w-5 h-5 border-b border-r border-violet-400/40 rounded-br" />
-          </div>
-        )}
-
-        {/* Status badge */}
+        {/* Status */}
         {modelReady && (
-          <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-violet-500/20">
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1 bg-black/70 backdrop-blur-md rounded-full border border-violet-500/15">
             <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-            <span className="text-[10px] text-emerald-300/80 uppercase tracking-wider">Activo</span>
+            <span className="text-[9px] text-emerald-300/70 uppercase tracking-widest">Tejas</span>
           </div>
         )}
       </div>
 
-      {/* Aura readings */}
-      {isScanning && auraReadings.length > 0 && (
-        <div className="space-y-4">
-          {/* Dominant aura */}
-          {dominantAura && (
-            <div className="text-center py-4 px-6 bg-white/[0.02] backdrop-blur-sm rounded-xl border border-violet-500/10">
-              <p className="text-[9px] text-violet-400/50 uppercase tracking-[0.3em] mb-2">Lectura Dominante</p>
-              <p className="text-xl font-light bg-gradient-to-r from-violet-200 via-fuchsia-200 to-violet-200 bg-clip-text text-transparent">
-                {dominantAura}
+      {/* === READINGS PANEL === */}
+      {isScanning && readings.length > 0 && (
+        <div className="space-y-6">
+          {/* Tejas meter + Guna reading */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-5 bg-white/[0.02] backdrop-blur-sm rounded-xl border border-violet-500/10">
+              <p className="text-[9px] text-violet-400/50 uppercase tracking-[0.25em] mb-3">
+                तेज · Tejas — Fuego Interior
               </p>
-            </div>
-          )}
-
-          {/* Zone grid */}
-          <div className="grid grid-cols-7 gap-1.5">
-            {auraReadings.map((reading) => (
-              <div
-                key={reading.zone}
-                className="p-2 bg-white/[0.02] backdrop-blur-sm rounded-lg border border-white/5 text-center group hover:border-violet-500/20 transition-colors"
-              >
+              <div className="relative h-2 bg-white/5 rounded-full overflow-hidden">
                 <div
-                  className="w-4 h-4 mx-auto rounded-full mb-1.5 transition-transform group-hover:scale-125"
+                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
                   style={{
-                    backgroundColor: `rgb(${reading.color.join(',')})`,
-                    boxShadow: `0 0 8px rgba(${reading.color.join(',')}, 0.5)`,
+                    width: `${tejasLevel * 100}%`,
+                    background: `linear-gradient(90deg, rgb(${getThermalColor(0).join(',')}), rgb(${getThermalColor(tejasLevel).join(',')}))`
                   }}
                 />
-                <p className="text-[9px] text-gray-500 truncate">{reading.zone}</p>
-                <p className="text-[11px] font-mono text-gray-300 mt-0.5">
-                  {Math.round(reading.intensity * 100)}
-                </p>
               </div>
-            ))}
+              <p className="text-right text-[11px] text-gray-400 mt-2 font-mono">{Math.round(tejasLevel * 100)}</p>
+            </div>
+            <div className="p-5 bg-white/[0.02] backdrop-blur-sm rounded-xl border border-violet-500/10">
+              <p className="text-[9px] text-violet-400/50 uppercase tracking-[0.25em] mb-3">
+                गुण · Guna — Estado Predominante
+              </p>
+              <p className="text-base font-light text-white/90">{dominantAura}</p>
+              <p className="text-[10px] text-gray-500 mt-1">
+                {tejasLevel > 0.5 ? 'Energía luminosa activa' : tejasLevel > 0.25 ? 'Energía en movimiento' : 'Energía en recogimiento'}
+              </p>
+            </div>
+          </div>
+
+          {/* Chakra readings - vertical spine layout */}
+          <div className="space-y-2">
+            <p className="text-[9px] text-violet-400/50 uppercase tracking-[0.25em] px-1">
+              चक्र · Chakras — Centros de Energía
+            </p>
+            <div className="space-y-1">
+              {readings.map((reading) => (
+                <button
+                  key={reading.name}
+                  onClick={() => setSelectedChakra(selectedChakra?.name === reading.name ? null : reading)}
+                  className="w-full text-left p-3 bg-white/[0.015] hover:bg-white/[0.04] rounded-lg border border-transparent hover:border-violet-500/10 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Chakra dot */}
+                    <div className="relative flex-shrink-0">
+                      <div
+                        className="w-4 h-4 rounded-full transition-transform group-hover:scale-125"
+                        style={{
+                          backgroundColor: `rgb(${reading.color.join(',')})`,
+                          boxShadow: `0 0 ${8 + reading.intensity * 12}px rgba(${reading.color.join(',')}, ${0.3 + reading.intensity * 0.4})`,
+                        }}
+                      />
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm text-white/80">{reading.name}</span>
+                        <span className="text-[10px] text-gray-600">{reading.sanskrit}</span>
+                        <span className="text-[10px] text-gray-600">· {reading.english}</span>
+                      </div>
+                    </div>
+                    {/* Intensity bar */}
+                    <div className="w-20 flex-shrink-0">
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${reading.intensity * 100}%`,
+                            backgroundColor: `rgb(${reading.color.join(',')})`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-mono text-gray-400 w-8 text-right">
+                      {Math.round(reading.intensity * 100)}
+                    </span>
+                  </div>
+
+                  {/* Expanded detail */}
+                  {selectedChakra?.name === reading.name && (
+                    <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-2 gap-3 text-[11px]">
+                      <div>
+                        <p className="text-gray-600 mb-0.5">Elemento</p>
+                        <p className="text-gray-300">{reading.element}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 mb-0.5">Mantra</p>
+                        <p className="text-gray-300 font-mono">{reading.mantra}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-gray-600 mb-0.5">Lectura</p>
+                        <p className="text-gray-300 leading-relaxed">{reading.interpretation}</p>
+                      </div>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -437,11 +704,9 @@ export default function AuraScanner() {
       {/* Controls */}
       {isScanning && (
         <div className="flex justify-center">
-          <button
-            onClick={stopScanning}
-            className="px-6 py-2.5 text-sm bg-white/[0.03] hover:bg-white/[0.06] text-gray-400 hover:text-gray-200 rounded-full border border-white/10 hover:border-white/20 transition-all"
-          >
-            Detener lectura
+          <button onClick={stopScanning}
+            className="px-6 py-2.5 text-xs bg-white/[0.03] hover:bg-white/[0.06] text-gray-400 hover:text-gray-200 rounded-full border border-white/10 hover:border-violet-500/20 transition-all tracking-wide">
+            Cerrar lectura
           </button>
         </div>
       )}
