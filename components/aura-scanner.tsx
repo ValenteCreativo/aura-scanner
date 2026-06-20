@@ -215,6 +215,8 @@ export default function AuraScanner() {
   const [tejasLevel, setTejasLevel] = useState(0) // Overall luminosity/tejas
   const [error, setError] = useState('')
   const [selectedChakra, setSelectedChakra] = useState<ChakraReading | null>(null)
+  const [countdown, setCountdown] = useState<number | null>(null)
+  const [capturedImage, setCapturedImage] = useState<string | null>(null)
 
   const poseLandmarkerRef = useRef<any>(null)
   const animFrameRef = useRef<number>(0)
@@ -501,6 +503,185 @@ export default function AuraScanner() {
     }
   }, [])
 
+  const capturePhoto = useCallback(() => {
+    setCountdown(3)
+    let count = 3
+    const interval = setInterval(() => {
+      count--
+      if (count <= 0) {
+        clearInterval(interval)
+        setCountdown(null)
+        performCapture()
+      } else {
+        setCountdown(count)
+      }
+    }, 1000)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const performCapture = useCallback(() => {
+    const video = videoRef.current
+    const overlay = overlayRef.current
+    if (!video || !overlay) return
+
+    // Create a composite canvas with video + aura overlay + branding
+    const cap = document.createElement('canvas')
+    const w = video.videoWidth
+    const h = video.videoHeight
+    cap.width = w
+    cap.height = h + 120 // Extra space for branding at bottom
+    const ctx = cap.getContext('2d')!
+
+    // Black background
+    ctx.fillStyle = '#080604'
+    ctx.fillRect(0, 0, cap.width, cap.height)
+
+    // Draw video (mirrored)
+    ctx.save()
+    ctx.translate(w, 0)
+    ctx.scale(-1, 1)
+    ctx.globalAlpha = 0.35
+    ctx.drawImage(video, 0, 0, w, h)
+    ctx.restore()
+
+    // Draw aura overlay (mirrored)
+    ctx.save()
+    ctx.translate(w, 0)
+    ctx.scale(-1, 1)
+    ctx.globalAlpha = 1
+    ctx.drawImage(overlay, 0, 0, w, h)
+    ctx.restore()
+
+    // Draw branding bar at bottom
+    ctx.fillStyle = 'rgba(8, 6, 4, 0.95)'
+    ctx.fillRect(0, h, w, 120)
+
+    // Top border line
+    const grad = ctx.createLinearGradient(0, h, w, h)
+    grad.addColorStop(0, 'rgba(212,175,55,0)')
+    grad.addColorStop(0.5, 'rgba(212,175,55,0.3)')
+    grad.addColorStop(1, 'rgba(212,175,55,0)')
+    ctx.strokeStyle = grad
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(0, h)
+    ctx.lineTo(w, h)
+    ctx.stroke()
+
+    // Aura text
+    const auraColor = tejasLevel > 0.7 ? 'Blanco' : tejasLevel > 0.55 ? 'Dorado' : tejasLevel > 0.45 ? 'Violeta' : tejasLevel > 0.38 ? 'Índigo' : tejasLevel > 0.3 ? 'Azul' : tejasLevel > 0.22 ? 'Verde' : tejasLevel > 0.15 ? 'Amarillo' : tejasLevel > 0.08 ? 'Naranja' : 'Rojo'
+    ctx.fillStyle = '#d4af37'
+    ctx.font = '600 18px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(`${auraColor} — ${dominantAura}`, w / 2, h + 40)
+
+    // OM + App name
+    ctx.fillStyle = 'rgba(212,175,55,0.4)'
+    ctx.font = '13px system-ui, sans-serif'
+    ctx.fillText('ॐ  Aura Scanner · Prabhamandala Reader', w / 2, h + 70)
+
+    // Tejas level
+    ctx.fillStyle = 'rgba(212,175,55,0.3)'
+    ctx.font = '11px monospace'
+    ctx.fillText(`Tejas: ${Math.round(tejasLevel * 100)} · ${new Date().toLocaleDateString('es-MX')}`, w / 2, h + 100)
+
+    const dataUrl = cap.toDataURL('image/png')
+    setCapturedImage(dataUrl)
+  }, [dominantAura, tejasLevel])
+
+  const getAuraReading = useCallback((): { color: string; title: string; personality: string; message: string } => {
+    if (tejasLevel > 0.7) return {
+      color: 'Blanco',
+      title: 'Pureza y equilibrio absoluto',
+      personality: 'Tu campo refleja un estado de armonía total. El blanco contiene todos los colores en perfecto balance — indica una consciencia expandida, claridad mental profunda y una conexión natural con lo trascendente.',
+      message: 'Estás en un momento de iluminación interior. Esta energía no es común; cultívala con meditación y silencio.',
+    }
+    if (tejasLevel > 0.55) return {
+      color: 'Dorado',
+      title: 'Protección divina y sabiduría',
+      personality: 'El dorado es el color de quienes están guiados por sus ideales más altos. Refleja protección espiritual, inspiración creativa superior y una conexión activa con la sabiduría cósmica.',
+      message: 'Tu energía irradia desde un centro de propósito elevado. Confía en tu intuición — estás siendo guiado.',
+    }
+    if (tejasLevel > 0.45) return {
+      color: 'Violeta',
+      title: 'Transformación y visión espiritual',
+      personality: 'El violeta pertenece a almas altamente sensibles, visionarias y enfocadas en un propósito trascendental. Indica transformación profunda, espiritualidad activa y conexión con planos superiores de consciencia.',
+      message: 'Estás en un proceso de transmutación interior. Lo que estás dejando ir te prepara para algo más elevado.',
+    }
+    if (tejasLevel > 0.38) return {
+      color: 'Índigo',
+      title: 'Intuición profunda y percepción sutil',
+      personality: 'El índigo señala una intuición aguda y una percepción del entorno sutil. Está presente en personas muy intuitivas, contemplativas y con acceso natural a estados expandidos de consciencia.',
+      message: 'Tu tercer ojo está activo. Presta atención a los mensajes que llegan en forma de sensaciones, sueños o corazonadas.',
+    }
+    if (tejasLevel > 0.3) return {
+      color: 'Azul',
+      title: 'Calma, verdad y expresión auténtica',
+      personality: 'El azul revela un estado mental sereno, honestidad natural y capacidad de comunicación clara. Indica paz interior, introspección saludable y una facilidad para expresar tu verdad sin miedo.',
+      message: 'Tu garganta está abierta. Es buen momento para decir lo que sientes, crear, cantar o escribir.',
+    }
+    if (tejasLevel > 0.22) return {
+      color: 'Verde',
+      title: 'Sanación, compasión y crecimiento',
+      personality: 'El verde es el color de la sanación y el amor incondicional. Quienes lo emiten suelen ser protectores naturales, empáticos profundos o personas atravesando un gran crecimiento personal.',
+      message: 'Tu corazón está expandido. Tienes la capacidad de sanar con tu presencia — a ti mismo y a otros.',
+    }
+    if (tejasLevel > 0.15) return {
+      color: 'Amarillo',
+      title: 'Intelecto, confianza y alegría',
+      personality: 'El amarillo se asocia con mentes brillantes, carisma natural y confianza en uno mismo. Refleja optimismo, facilidad para resolver problemas y una energía solar que atrae a los demás.',
+      message: 'Tu centro de poder personal está encendido. Aprovecha esta claridad para tomar decisiones importantes.',
+    }
+    if (tejasLevel > 0.08) return {
+      color: 'Naranja',
+      title: 'Creatividad, vitalidad y apertura',
+      personality: 'El naranja simboliza creatividad desbordante, vitalidad y apertura al cambio. Indica que estás explorando nuevas ideas, viviendo con pasión y manteniendo relaciones abiertas y nutritivas.',
+      message: 'Tu energía creativa está en flujo. Permítete explorar sin juicio — la inspiración busca canalizarse a través de ti.',
+    }
+    return {
+      color: 'Rojo',
+      title: 'Fuerza, pasión y arraigo',
+      personality: 'El rojo representa fuerza física, determinación y conexión con la tierra. Indica una personalidad decidida, ambiciosa y presente — alguien que está firmemente plantado en el mundo material.',
+      message: 'Tu raíz está activa. Es momento de acción, de construir, de materializar lo que has estado soñando.',
+    }
+  }, [tejasLevel])
+
+  const shareTwitter = useCallback(() => {
+    const reading = getAuraReading()
+    const text = `Hoy mi campo áurico vibra en ${reading.color} — ${reading.title}.\n\n¿Cuál es el color de tu alma?\n\nDescúbrelo aquí:`
+    const url = window.location.href
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
+    window.open(tweetUrl, '_blank', 'width=600,height=400')
+  }, [getAuraReading])
+
+  const shareInstagram = useCallback(async () => {
+    if (!capturedImage) return
+    try {
+      const blob = await (await fetch(capturedImage)).blob()
+      const file = new File([blob], 'mi-aura.png', { type: 'image/png' })
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        const reading = getAuraReading()
+        await navigator.share({
+          title: 'Mi Lectura de Aura',
+          text: `Mi campo áurico vibra en ${reading.color} — ${reading.title}. ¿Cuál es el tuyo?`,
+          files: [file],
+        })
+      } else {
+        downloadImage()
+      }
+    } catch {
+      downloadImage()
+    }
+  }, [capturedImage, getAuraReading])
+
+  const downloadImage = useCallback(() => {
+    if (!capturedImage) return
+    const a = document.createElement('a')
+    a.href = capturedImage
+    a.download = `mi-aura-${Date.now()}.png`
+    a.click()
+  }, [capturedImage])
+
   const stopScanning = useCallback(() => {
     setIsScanning(false)
     cancelAnimationFrame(animFrameRef.current)
@@ -596,6 +777,30 @@ export default function AuraScanner() {
             <span className="text-[9px] text-emerald-300/70 uppercase tracking-widest">Tejas</span>
           </div>
         )}
+
+        {/* Countdown overlay */}
+        {countdown !== null && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="relative">
+              <div className="w-28 h-28 rounded-full border-2 border-amber-400/40 flex items-center justify-center animate-pulse">
+                <span className="text-6xl font-extralight text-amber-200/90 text-glow-gold">{countdown}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Capture button */}
+        {isScanning && countdown === null && !capturedImage && (
+          <button
+            onClick={capturePhoto}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 group"
+            title="Capturar foto (3s)"
+          >
+            <div className="w-14 h-14 rounded-full border-[3px] border-amber-400/40 group-hover:border-amber-400/70 transition-all flex items-center justify-center group-hover:scale-110 group-active:scale-95">
+              <div className="w-10 h-10 rounded-full bg-amber-400/20 group-hover:bg-amber-400/40 transition-all" />
+            </div>
+          </button>
+        )}
       </div>
 
       {/* === READINGS PANEL === */}
@@ -689,6 +894,92 @@ export default function AuraScanner() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* === SHARE MODAL === */}
+      {capturedImage && (
+        <div className="space-y-8 animate-unfold">
+          {/* Reading result */}
+          {(() => {
+            const reading = getAuraReading()
+            return (
+              <div className="p-8 rounded-2xl border space-y-5" style={{ background: 'rgba(12,10,6,0.7)', borderColor: 'rgba(212,175,55,0.1)' }}>
+                <div className="text-center space-y-1">
+                  <p className="text-[9px] text-amber-400/40 uppercase tracking-[0.4em]">Tu lectura de hoy</p>
+                  <h3 className="text-2xl font-light text-amber-200/90 text-glow-gold">
+                    {reading.color}
+                  </h3>
+                  <p className="text-sm text-amber-300/50 italic">{reading.title}</p>
+                </div>
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-500/15 to-transparent" />
+                <p className="text-sm text-amber-100/60 leading-[2] text-center max-w-lg mx-auto">
+                  {reading.personality}
+                </p>
+                <div className="p-4 rounded-xl text-center" style={{ background: 'rgba(212,175,55,0.03)', border: '1px solid rgba(212,175,55,0.06)' }}>
+                  <p className="text-sm text-amber-200/70 italic leading-relaxed">
+                    &ldquo;{reading.message}&rdquo;
+                  </p>
+                </div>
+                <p className="text-[10px] text-amber-400/25 text-center leading-relaxed">
+                  Recuerda: tu aura no es estática. Es un reflejo vivo de tus emociones, salud y estado de consciencia
+                  en este instante. Mañana puede ser diferente — y eso es parte de la belleza del ser.
+                </p>
+              </div>
+            )
+          })()}
+
+          {/* Preview */}
+          <div className="relative rounded-xl overflow-hidden border shadow-2xl mx-auto max-w-md"
+            style={{ borderColor: 'rgba(212,175,55,0.12)' }}>
+            <img src={capturedImage} alt="Captura de aura" className="w-full" />
+          </div>
+
+          {/* Share buttons */}
+          <div className="space-y-3">
+            <p className="text-[10px] text-amber-400/30 text-center uppercase tracking-[0.3em]">Compartir</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {/* Twitter/X */}
+              <button onClick={shareTwitter}
+                className="flex items-center gap-2.5 px-6 py-3 rounded-full border transition-all hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+                style={{ background: 'rgba(15,12,8,0.6)', borderColor: 'rgba(212,175,55,0.12)' }}>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" style={{ color: 'rgba(212,175,55,0.7)' }}>
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                <span className="text-sm text-amber-200/70">Compartir en X</span>
+              </button>
+
+              {/* Instagram / Native Share */}
+              <button onClick={shareInstagram}
+                className="flex items-center gap-2.5 px-6 py-3 rounded-full border transition-all hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+                style={{ background: 'rgba(15,12,8,0.6)', borderColor: 'rgba(212,175,55,0.12)' }}>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'rgba(212,175,55,0.7)' }}>
+                  <rect x="2" y="2" width="20" height="20" rx="5" />
+                  <circle cx="12" cy="12" r="5" />
+                  <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
+                </svg>
+                <span className="text-sm text-amber-200/70">Historia / Compartir</span>
+              </button>
+
+              {/* Download */}
+              <button onClick={downloadImage}
+                className="flex items-center gap-2.5 px-6 py-3 rounded-full border transition-all hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+                style={{ background: 'rgba(15,12,8,0.6)', borderColor: 'rgba(212,175,55,0.12)' }}>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'rgba(212,175,55,0.7)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                <span className="text-sm text-amber-200/70">Guardar imagen</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Dismiss */}
+          <div className="flex justify-center">
+            <button onClick={() => setCapturedImage(null)}
+              className="text-xs text-amber-400/30 hover:text-amber-400/60 transition-colors tracking-wide">
+              Cerrar y seguir escaneando
+            </button>
           </div>
         </div>
       )}
