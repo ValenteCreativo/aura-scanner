@@ -646,13 +646,32 @@ export default function AuraScanner() {
     }
   }, [tejasLevel])
 
-  const shareTwitter = useCallback(() => {
+  const shareTwitter = useCallback(async () => {
     const reading = getAuraReading()
+
+    // Try native share first (allows attaching the image on mobile)
+    if (capturedImage && navigator.share) {
+      try {
+        const blob = await (await fetch(capturedImage)).blob()
+        const file = new File([blob], 'mi-aura.png', { type: 'image/png' })
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            text: `Hoy mi campo áurico vibra en ${reading.color} — ${reading.title}.\n\n¿Cuál es el color de tu alma?\n\nDescúbrelo en: ${window.location.href}`,
+            files: [file],
+          })
+          return
+        }
+      } catch {
+        // User cancelled or share failed — fall through to intent
+      }
+    }
+
+    // Fallback: tweet intent (text only, no image attachment possible)
     const text = `Hoy mi campo áurico vibra en ${reading.color} — ${reading.title}.\n\n¿Cuál es el color de tu alma?\n\nDescúbrelo aquí:`
     const url = window.location.href
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
     window.open(tweetUrl, '_blank', 'width=600,height=400')
-  }, [getAuraReading])
+  }, [getAuraReading, capturedImage])
 
   const shareInstagram = useCallback(async () => {
     if (!capturedImage) return
