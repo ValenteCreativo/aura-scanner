@@ -603,11 +603,11 @@ export default function AuraScanner() {
         <div className="space-y-6">
           {/* Tejas meter + Guna reading */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-5 bg-white/[0.02] backdrop-blur-sm rounded-xl border border-violet-500/10">
-              <p className="text-[9px] text-violet-400/50 uppercase tracking-[0.25em] mb-3">
+            <div className="p-6 rounded-xl border" style={{ background: 'rgba(15,12,8,0.6)', borderColor: 'rgba(212,175,55,0.08)' }}>
+              <p className="text-[10px] text-amber-400/50 uppercase tracking-[0.3em] mb-3">
                 तेज · Tejas — Fuego Interior
               </p>
-              <div className="relative h-2 bg-white/5 rounded-full overflow-hidden">
+              <div className="relative h-2.5 bg-white/5 rounded-full overflow-hidden">
                 <div
                   className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
                   style={{
@@ -616,81 +616,73 @@ export default function AuraScanner() {
                   }}
                 />
               </div>
-              <p className="text-right text-[11px] text-gray-400 mt-2 font-mono">{Math.round(tejasLevel * 100)}</p>
+              <p className="text-right text-sm text-amber-200/60 mt-2 font-mono">{Math.round(tejasLevel * 100)}</p>
             </div>
-            <div className="p-5 bg-white/[0.02] backdrop-blur-sm rounded-xl border border-violet-500/10">
-              <p className="text-[9px] text-violet-400/50 uppercase tracking-[0.25em] mb-3">
+            <div className="p-6 rounded-xl border" style={{ background: 'rgba(15,12,8,0.6)', borderColor: 'rgba(212,175,55,0.08)' }}>
+              <p className="text-[10px] text-amber-400/50 uppercase tracking-[0.3em] mb-3">
                 गुण · Guna — Estado Predominante
               </p>
-              <p className="text-base font-light text-white/90">{dominantAura}</p>
-              <p className="text-[10px] text-gray-500 mt-1">
+              <p className="text-lg font-light text-amber-100/90 text-glow-gold">{dominantAura}</p>
+              <p className="text-xs text-amber-200/40 mt-2">
                 {tejasLevel > 0.5 ? 'Energía luminosa activa' : tejasLevel > 0.25 ? 'Energía en movimiento' : 'Energía en recogimiento'}
               </p>
             </div>
           </div>
 
-          {/* Chakra readings - vertical spine layout */}
-          <div className="space-y-2">
-            <p className="text-[9px] text-violet-400/50 uppercase tracking-[0.25em] px-1">
+          {/* Chakra readings */}
+          <div className="space-y-3">
+            <p className="text-[10px] text-amber-400/40 uppercase tracking-[0.3em] px-1">
               चक्र · Chakras — Centros de Energía
             </p>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {readings.map((reading) => (
                 <button
                   key={reading.name}
                   onClick={() => setSelectedChakra(selectedChakra?.name === reading.name ? null : reading)}
-                  className="w-full text-left p-3 bg-white/[0.015] hover:bg-white/[0.04] rounded-lg border border-transparent hover:border-violet-500/10 transition-all group"
+                  className="w-full text-left p-4 rounded-xl border border-transparent hover:border-amber-500/10 transition-all group"
+                  style={{ background: 'rgba(15,12,8,0.4)' }}
                 >
-                  <div className="flex items-center gap-3">
-                    {/* Chakra dot */}
+                  <div className="flex items-center gap-4">
                     <div className="relative flex-shrink-0">
                       <div
-                        className="w-4 h-4 rounded-full transition-transform group-hover:scale-125"
+                        className="w-5 h-5 rounded-full transition-all duration-300 group-hover:scale-150"
                         style={{
                           backgroundColor: `rgb(${reading.color.join(',')})`,
-                          boxShadow: `0 0 ${8 + reading.intensity * 12}px rgba(${reading.color.join(',')}, ${0.3 + reading.intensity * 0.4})`,
+                          boxShadow: `0 0 ${10 + reading.intensity * 15}px rgba(${reading.color.join(',')}, ${0.4 + reading.intensity * 0.4})`,
                         }}
                       />
                     </div>
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-sm text-white/80">{reading.name}</span>
-                        <span className="text-[10px] text-gray-600">{reading.sanskrit}</span>
-                        <span className="text-[10px] text-gray-600">· {reading.english}</span>
+                        <span className="text-sm text-amber-100/80 font-medium">{reading.name}</span>
+                        <span className="text-xs text-amber-400/30">{reading.sanskrit}</span>
+                        <span className="text-xs text-amber-200/30">· {reading.english}</span>
                       </div>
                     </div>
-                    {/* Intensity bar */}
-                    <div className="w-20 flex-shrink-0">
-                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${reading.intensity * 100}%`,
-                            backgroundColor: `rgb(${reading.color.join(',')})`,
-                          }}
-                        />
+                    <div className="w-24 flex-shrink-0">
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${reading.intensity * 100}%`, backgroundColor: `rgb(${reading.color.join(',')})` }} />
                       </div>
                     </div>
-                    <span className="text-[11px] font-mono text-gray-400 w-8 text-right">
+                    <span className="text-sm font-mono text-amber-200/50 w-10 text-right">
                       {Math.round(reading.intensity * 100)}
                     </span>
                   </div>
 
-                  {/* Expanded detail */}
                   {selectedChakra?.name === reading.name && (
-                    <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-2 gap-3 text-[11px]">
+                    <div className="mt-4 pt-4 border-t border-amber-500/10 grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-600 mb-0.5">Elemento</p>
-                        <p className="text-gray-300">{reading.element}</p>
+                        <p className="text-amber-400/40 text-xs mb-1">Elemento</p>
+                        <p className="text-amber-100/70">{reading.element}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600 mb-0.5">Mantra</p>
-                        <p className="text-gray-300 font-mono">{reading.mantra}</p>
+                        <p className="text-amber-400/40 text-xs mb-1">Mantra</p>
+                        <p className="text-amber-100/70 font-mono text-lg">{reading.mantra}</p>
                       </div>
                       <div className="col-span-2">
-                        <p className="text-gray-600 mb-0.5">Lectura</p>
-                        <p className="text-gray-300 leading-relaxed">{reading.interpretation}</p>
+                        <p className="text-amber-400/40 text-xs mb-1">Lectura</p>
+                        <p className="text-amber-100/60 leading-relaxed">{reading.interpretation}</p>
                       </div>
                     </div>
                   )}
@@ -705,7 +697,8 @@ export default function AuraScanner() {
       {isScanning && (
         <div className="flex justify-center">
           <button onClick={stopScanning}
-            className="px-6 py-2.5 text-xs bg-white/[0.03] hover:bg-white/[0.06] text-gray-400 hover:text-gray-200 rounded-full border border-white/10 hover:border-violet-500/20 transition-all tracking-wide">
+            className="px-8 py-3 text-sm rounded-full border transition-all tracking-wide hover:scale-105"
+            style={{ background: 'rgba(15,12,8,0.5)', borderColor: 'rgba(212,175,55,0.1)', color: 'rgba(212,175,55,0.5)' }}>
             Cerrar lectura
           </button>
         </div>
