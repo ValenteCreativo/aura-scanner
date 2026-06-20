@@ -421,15 +421,54 @@ export default function AuraScanner() {
 
     setReadings(chakraReadings)
 
-    // Calculate Tejas (overall luminous energy)
+    // Calculate dominant aura based on ACTUAL rendered colors (not just intensity)
     if (chakraReadings.length > 0) {
       const avg = chakraReadings.reduce((s, r) => s + r.intensity, 0) / chakraReadings.length
       setTejasLevel(avg)
-      if (avg > 0.7) setDominantAura('Sattva — Luminosidad pura')
-      else if (avg > 0.5) setDominantAura('Sattva-Rajas — Luz activa')
-      else if (avg > 0.35) setDominantAura('Rajas — Energía dinámica')
-      else if (avg > 0.2) setDominantAura('Rajas-Tamas — Transición')
-      else setDominantAura('Tamas — Energía en reposo')
+
+      // Determine the dominant color from what's actually being drawn
+      // Average the RGB of all chakra thermal colors to find the true dominant hue
+      let totalR = 0, totalG = 0, totalB = 0
+      for (const cr of chakraReadings) {
+        totalR += cr.color[0]
+        totalG += cr.color[1]
+        totalB += cr.color[2]
+      }
+      totalR /= chakraReadings.length
+      totalG /= chakraReadings.length
+      totalB /= chakraReadings.length
+
+      // Convert average RGB to hue to determine which chakra color family it belongs to
+      const r = totalR / 255, g = totalG / 255, b = totalB / 255
+      const max = Math.max(r, g, b), min = Math.min(r, g, b)
+      let hue = 0
+      if (max !== min) {
+        if (max === r) hue = ((g - b) / (max - min)) % 6
+        else if (max === g) hue = (b - r) / (max - min) + 2
+        else hue = (r - g) / (max - min) + 4
+        hue = (hue * 60 + 360) % 360
+      }
+
+      // Map hue to chakra color name — this matches what the user actually SEES
+      let colorName: string
+      if (max - min < 0.1) {
+        // Low saturation = white/gray
+        if (avg > 0.6) colorName = 'Blanco'
+        else colorName = 'Gris'
+      } else if (hue >= 330 || hue < 15) colorName = 'Rojo'
+      else if (hue >= 15 && hue < 45) colorName = 'Naranja'
+      else if (hue >= 45 && hue < 70) colorName = 'Amarillo'
+      else if (hue >= 70 && hue < 160) colorName = 'Verde'
+      else if (hue >= 160 && hue < 250) colorName = 'Azul'
+      else if (hue >= 250 && hue < 290) colorName = 'Violeta'
+      else colorName = 'Magenta'
+
+      // Set guna reading (energy state)
+      if (avg > 0.7) setDominantAura(`${colorName} · Sattva — Luminosidad pura`)
+      else if (avg > 0.5) setDominantAura(`${colorName} · Sattva-Rajas — Luz activa`)
+      else if (avg > 0.35) setDominantAura(`${colorName} · Rajas — Energía dinámica`)
+      else if (avg > 0.2) setDominantAura(`${colorName} · Rajas-Tamas — Transición`)
+      else setDominantAura(`${colorName} · Tamas — Energía en reposo`)
     }
   }, [])
 
@@ -569,11 +608,10 @@ export default function AuraScanner() {
     ctx.stroke()
 
     // Aura text
-    const auraColor = tejasLevel > 0.7 ? 'Blanco' : tejasLevel > 0.55 ? 'Dorado' : tejasLevel > 0.45 ? 'Violeta' : tejasLevel > 0.38 ? 'Índigo' : tejasLevel > 0.3 ? 'Azul' : tejasLevel > 0.22 ? 'Verde' : tejasLevel > 0.15 ? 'Amarillo' : tejasLevel > 0.08 ? 'Naranja' : 'Rojo'
     ctx.fillStyle = '#d4af37'
     ctx.font = '600 18px system-ui, sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText(`${auraColor} — ${dominantAura}`, w / 2, h + 40)
+    ctx.fillText(dominantAura || 'Lectura de Aura', w / 2, h + 40)
 
     // OM + App name
     ctx.fillStyle = 'rgba(212,175,55,0.4)'
@@ -590,61 +628,65 @@ export default function AuraScanner() {
   }, [dominantAura, tejasLevel])
 
   const getAuraReading = useCallback((): { color: string; title: string; personality: string; message: string } => {
-    if (tejasLevel > 0.7) return {
+    // Extract the color name from dominantAura (format: "Color · Guna — description")
+    const colorName = dominantAura.split('·')[0]?.trim() || ''
+
+    if (colorName === 'Blanco') return {
       color: 'Blanco',
       title: 'Pureza y equilibrio absoluto',
       personality: 'Tu campo refleja un estado de armonía total. El blanco contiene todos los colores en perfecto balance — indica una consciencia expandida, claridad mental profunda y una conexión natural con lo trascendente.',
       message: 'Estás en un momento de iluminación interior. Esta energía no es común; cultívala con meditación y silencio.',
     }
-    if (tejasLevel > 0.55) return {
-      color: 'Dorado',
-      title: 'Protección divina y sabiduría',
-      personality: 'El dorado es el color de quienes están guiados por sus ideales más altos. Refleja protección espiritual, inspiración creativa superior y una conexión activa con la sabiduría cósmica.',
-      message: 'Tu energía irradia desde un centro de propósito elevado. Confía en tu intuición — estás siendo guiado.',
-    }
-    if (tejasLevel > 0.45) return {
+    if (colorName === 'Magenta' || colorName === 'Violeta') return {
       color: 'Violeta',
       title: 'Transformación y visión espiritual',
       personality: 'El violeta pertenece a almas altamente sensibles, visionarias y enfocadas en un propósito trascendental. Indica transformación profunda, espiritualidad activa y conexión con planos superiores de consciencia.',
       message: 'Estás en un proceso de transmutación interior. Lo que estás dejando ir te prepara para algo más elevado.',
     }
-    if (tejasLevel > 0.38) return {
-      color: 'Índigo',
-      title: 'Intuición profunda y percepción sutil',
-      personality: 'El índigo señala una intuición aguda y una percepción del entorno sutil. Está presente en personas muy intuitivas, contemplativas y con acceso natural a estados expandidos de consciencia.',
-      message: 'Tu tercer ojo está activo. Presta atención a los mensajes que llegan en forma de sensaciones, sueños o corazonadas.',
-    }
-    if (tejasLevel > 0.3) return {
+    if (colorName === 'Azul') return {
       color: 'Azul',
       title: 'Calma, verdad y expresión auténtica',
       personality: 'El azul revela un estado mental sereno, honestidad natural y capacidad de comunicación clara. Indica paz interior, introspección saludable y una facilidad para expresar tu verdad sin miedo.',
       message: 'Tu garganta está abierta. Es buen momento para decir lo que sientes, crear, cantar o escribir.',
     }
-    if (tejasLevel > 0.22) return {
+    if (colorName === 'Verde') return {
       color: 'Verde',
       title: 'Sanación, compasión y crecimiento',
       personality: 'El verde es el color de la sanación y el amor incondicional. Quienes lo emiten suelen ser protectores naturales, empáticos profundos o personas atravesando un gran crecimiento personal.',
       message: 'Tu corazón está expandido. Tienes la capacidad de sanar con tu presencia — a ti mismo y a otros.',
     }
-    if (tejasLevel > 0.15) return {
+    if (colorName === 'Amarillo') return {
       color: 'Amarillo',
       title: 'Intelecto, confianza y alegría',
       personality: 'El amarillo se asocia con mentes brillantes, carisma natural y confianza en uno mismo. Refleja optimismo, facilidad para resolver problemas y una energía solar que atrae a los demás.',
       message: 'Tu centro de poder personal está encendido. Aprovecha esta claridad para tomar decisiones importantes.',
     }
-    if (tejasLevel > 0.08) return {
+    if (colorName === 'Naranja') return {
       color: 'Naranja',
       title: 'Creatividad, vitalidad y apertura',
       personality: 'El naranja simboliza creatividad desbordante, vitalidad y apertura al cambio. Indica que estás explorando nuevas ideas, viviendo con pasión y manteniendo relaciones abiertas y nutritivas.',
       message: 'Tu energía creativa está en flujo. Permítete explorar sin juicio — la inspiración busca canalizarse a través de ti.',
     }
-    return {
+    if (colorName === 'Rojo') return {
       color: 'Rojo',
       title: 'Fuerza, pasión y arraigo',
       personality: 'El rojo representa fuerza física, determinación y conexión con la tierra. Indica una personalidad decidida, ambiciosa y presente — alguien que está firmemente plantado en el mundo material.',
       message: 'Tu raíz está activa. Es momento de acción, de construir, de materializar lo que has estado soñando.',
     }
-  }, [tejasLevel])
+    if (colorName === 'Gris') return {
+      color: 'Gris',
+      title: 'Pausa y recogimiento',
+      personality: 'El gris no representa una energía negativa sino un momento de pausa. Puede indicar cansancio, necesidad de descanso o un período de introspección profunda antes de un nuevo ciclo.',
+      message: 'Tu cuerpo y espíritu te piden quietud. Honra esta pausa — el descanso es parte del camino.',
+    }
+    // Fallback (Dorado for very high intensity unsaturated)
+    return {
+      color: 'Dorado',
+      title: 'Protección divina y sabiduría',
+      personality: 'El dorado es el color de quienes están guiados por sus ideales más altos. Refleja protección espiritual, inspiración creativa superior y una conexión activa con la sabiduría cósmica.',
+      message: 'Tu energía irradia desde un centro de propósito elevado. Confía en tu intuición — estás siendo guiado.',
+    }
+  }, [dominantAura])
 
   const shareTwitter = useCallback(async () => {
     const reading = getAuraReading()
